@@ -2,9 +2,9 @@ import feedparser
 import re
 
 def main():
-    position = 0
+    position = -1
     opened = True
-    titles = []
+    frstOldLine = ""
     url = "https://cc.cz/feed/"
 
     d = feedparser.parse(url)
@@ -14,10 +14,7 @@ def main():
 
     try:
         with open('rss.txt', 'r') as f:
-            lines = f.readlines()
-            for line in lines:
-                if re.match("\d", line):
-                    titles.append(re.sub(r'.*: |\n','',line))
+            frstOldLine = re.sub(r'.*: |\n','',f.readline(-1))
     except OSError:
         opened = False
 
@@ -25,12 +22,8 @@ def main():
 
     with open('rss.txt', 'w') as f:
         for index, i in enumerate(itemField):
-            if index == 0:
-                try:
-                    position = titles.index(i.title) 
-                    # position 0
-                except ValueError:
-                    pass
+            if frstOldLine == i.title:
+                position = index
             f.write(f"{index+1}: {i.title}\n")
             f.write(f"{' '*4}- {i.link}\n")
             desc = re.sub(r'<img.* />|<p>Článek.*/p>|<p>|</p>',r'',i.description)
@@ -40,8 +33,10 @@ def main():
     print("\nDone!")
 
     if opened:
-        if position <= 0:
+        if position == 0:
             print("No new news found.")
+        elif position == -1:
+            print(f"Found {len(d)} new news!")
         else:
             print(f"Found {position} new news!")
             
